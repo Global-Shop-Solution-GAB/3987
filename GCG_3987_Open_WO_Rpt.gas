@@ -1,0 +1,286 @@
+Program.Sub.ScreenSU.Start
+Gui.Form1..Create
+Gui.Form1..Caption("Open WO Report")
+Gui.Form1..Size(2460,2100)
+Gui.Form1..Position(0,0)
+Gui.Form1..AlwaysOnTop(False)
+Gui.Form1..FontName("Arial")
+Gui.Form1..FontSize(8)
+Gui.Form1..ForeColor(0)
+Gui.Form1..Backcolor(-2147483633)
+Gui.Form1..ControlBox(True)
+Gui.Form1..MaxButton(False)
+Gui.Form1..MinButton(False)
+Gui.Form1..MousePointer(0)
+Gui.Form1..Moveable(True)
+Gui.Form1..Sizeable(False)
+Gui.Form1..ShowInTaskBar(False)
+Gui.Form1..TitleBar(True)
+Gui.Form1..Event(unload,Form1_Unload)
+Gui.Form1.lblOpCode.Create(label)
+Gui.Form1.lblOpCode.Caption("Op Code")
+Gui.Form1.lblOpCode.Visible(True)
+Gui.Form1.lblOpCode.Size(1500,300)
+Gui.Form1.lblOpCode.Zorder(0)
+Gui.Form1.lblOpCode.Position(195,195)
+Gui.Form1.lblOpCode.Enabled(True)
+Gui.Form1.lblOpCode.Alignment(0)
+Gui.Form1.lblOpCode.FontName("Arial")
+Gui.Form1.lblOpCode.FontSize(8)
+Gui.Form1.lblOpCode.Backcolor(0)
+Gui.Form1.lblOpCode.BackStyle(0)
+Gui.Form1.lblOpCode.Tooltip("")
+Gui.Form1.lblOpCode.ControlGroup(0)
+Gui.Form1.lblOpCode.DefaultValue("")
+Gui.Form1.txtOpCode.Create(textbox)
+Gui.Form1.txtOpCode.Text("")
+Gui.Form1.txtOpCode.Visible(True)
+Gui.Form1.txtOpCode.Size(1500,300)
+Gui.Form1.txtOpCode.Zorder(0)
+Gui.Form1.txtOpCode.Position(200,525)
+Gui.Form1.txtOpCode.Enabled(True)
+Gui.Form1.txtOpCode.Alignment(0)
+Gui.Form1.txtOpCode.FontName("Arial")
+Gui.Form1.txtOpCode.FontSize(8)
+Gui.Form1.txtOpCode.Backcolor(16777215)
+Gui.Form1.txtOpCode.BorderStyle(1)
+Gui.Form1.txtOpCode.TabStop(True)
+Gui.Form1.txtOpCode.TabIndex(1)
+Gui.Form1.txtOpCode.Tooltip("")
+Gui.Form1.txtOpCode.ControlGroup(0)
+Gui.Form1.txtOpCode.DefaultValue("")
+Gui.Form1.cmdOp.Create(button)
+Gui.Form1.cmdOp.Caption("^")
+Gui.Form1.cmdOp.Visible(True)
+Gui.Form1.cmdOp.Size(435,345)
+Gui.Form1.cmdOp.Zorder(0)
+Gui.Form1.cmdOp.Position(1845,495)
+Gui.Form1.cmdOp.Enabled(True)
+Gui.Form1.cmdOp.FontName("Arial")
+Gui.Form1.cmdOp.FontSize(7)
+Gui.Form1.cmdOp.TabStop(True)
+Gui.Form1.cmdOp.TabIndex(11)
+Gui.Form1.cmdOp.Tooltip("")
+Gui.Form1.cmdOp.ControlGroup(0)
+Gui.Form1.cmdOp.DefaultValue("")
+Gui.Form1.cmdOp.Event(click,cmdOp_Click)
+Gui.Form1.cmdPrint.Create(button)
+Gui.Form1.cmdPrint.Caption("Print")
+Gui.Form1.cmdPrint.Visible(True)
+Gui.Form1.cmdPrint.Size(1125,345)
+Gui.Form1.cmdPrint.Zorder(0)
+Gui.Form1.cmdPrint.Position(210,1155)
+Gui.Form1.cmdPrint.Enabled(True)
+Gui.Form1.cmdPrint.FontName("Arial")
+Gui.Form1.cmdPrint.FontSize(8)
+Gui.Form1.cmdPrint.TabStop(True)
+Gui.Form1.cmdPrint.TabIndex(21)
+Gui.Form1.cmdPrint.Tooltip("")
+Gui.Form1.cmdPrint.ControlGroup(0)
+Gui.Form1.cmdPrint.DefaultValue("")
+Gui.Form1.cmdPrint.Event(click,cmdPrint_Click)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Variable.UDT.uJobs.Define("sJob",String,Job)
+Variable.UDT.uJobs.Define("sSuffix",String,Suffix)
+Variable.UDT.uJobs.Define("sSeq",String,Seq)
+Variable.UDT.uJobs.Define("iQty",Float)
+Variable.UDT.uJobs.Define("dDate",Date)
+Variable.UDT.uJobs.Define("sUser",String)
+Variable.UDT.uJobs.Define("sPart",String)
+Variable.UDT.uJobs.Define("iBIRunID",Long)
+Variable.UDT.uJobs.Define("sOpCode",String)
+Variable.uGlobal.uJobs.Declare("uJobs")
+Variable.Global.iBIRunID.Declare(Long,0)
+Variable.Global.iBILogID.Declare(Long,0)
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'This report will run from a custom menu item in Shop floor control -> Reports -> Open Work by Op Code
+'Created by SKC on 4/2015 for Pamco.
+'The user will be able to select an OP that will be used to check open work orders that still have a sequence open that match the OP code.
+'The report will display the Job, suffix, part, qty, due date, and the last employee to log into that sequence if it is still open.
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+'Clear out old data
+V.Local.sSql.Set("Delete From GCG_3987_OpnWO_BI")
+F.ODBC.Connection!conx.Execute(v.Local.sSql)
+Gui.Form1..Show
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3987_Open_WO_Rpt.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Form1_Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Form1_Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+'Close connection to database and end the program
+F.ODBC.Connection!conx.Close
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Form1_Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3987_Open_WO_Rpt.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Form1_Unload.End
+
+Program.Sub.cmdOp_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdOp_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+V.Local.sRet.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.iWidths.Declare(Long)
+
+'set the Browser so the user can select an Op code.  Once select the value will be displayed in the Text box
+F.Intrinsic.String.Split("Operation*!*Description","*!*",v.Local.sTitles)
+F.Intrinsic.String.Split("1000*!*2000","*!*",v.Local.iWidths)
+V.Local.sSql.Set("Select Operation, Description From OP_Codes order by Operation")
+F.Intrinsic.UI.Browser("Operation Code","conx",v.Local.sSql,v.Local.sTitles,v.Local.iWidths,v.Local.sRet)
+F.Intrinsic.Control.If(v.Local.sRet,=,"***CANCEL***")
+	F.Intrinsic.UI.Msgbox("No Operation Code Selected!","OP Code")
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+F.Intrinsic.Control.EndIf
+
+Gui.Form1.txtOpCode.Text(v.Local.sRet(0).Trim)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdOp_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3987_Open_WO_Rpt.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdOp_Click.End
+
+Program.Sub.cmdPrint_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdPrint_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+V.Local.sSql.Declare(String)
+V.Local.sOpCode.Declare(String)
+V.Local.sVal.Declare(String)
+V.Local.sParam.Declare(String)
+V.Local.iCount.Declare(Long)
+
+'Check to see if an Op Code hase been selected.  If one has not then inform user and exit the sub.
+F.Intrinsic.Control.If(V.Screen.Form1!txtOpCode.Text,=,"")
+	F.Intrinsic.UI.Msgbox("No Operation Code Selected!","Error")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+'Once an op code has been selected get the run id and start logging
+F.Global.BI.GetRunID(V.Global.iBIRunID)
+F.Global.BI.StartLogging(V.Global.iBIRunID,-1,-1,"",V.Global.iBILogID)
+
+V.Local.sOpCode.Set(v.Screen.Form1!txtOpCode.Text)
+'Get Jobs that have an open Sequence that matches the Op code selected.
+F.Intrinsic.String.Build("Select Job, Suffix, Seq From Job_Operations_WC Where Operation = '{0}' and Flag_Closed <> 'Y' Order by Job, Suffix, Seq",v.Local.sOpCode.Trim,v.Local.sSql)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",v.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	'Load UDT with the Records
+	F.Intrinsic.Variable.LoadUDTFromRecordset("conx","rst","v.uGlobal.uJobs",False)
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox("No work orders that have an open sequence with that Op Code!","No Records Found")
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+
+'Get the qty, due date, part number, and Last user logged in if avaliable for the work order
+F.Intrinsic.Control.For(v.Local.iCount,0,v.uGlobal.uJobs.UBound,1)
+	F.Intrinsic.String.Build("Select Part, Date_Due, Qty_Order from v_Job_Header where Job = '{0}' and Suffix = '{1}'",v.uGlobal.uJobs(v.Local.iCount)!sJob,v.uGlobal.uJobs(v.Local.iCount)!sSuffix,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",v.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+		V.uGlobal.uJobs(v.Local.iCount)!iQty.Set(V.ODBC.conx!rst.FieldValTrim!Qty_Order)
+		V.uGlobal.uJobs(v.Local.iCount)!dDate.Set(V.ODBC.conx!rst.FieldValTrim!Date_Due)
+		V.uGlobal.uJobs(v.Local.iCount)!sPart.Set(V.ODBC.conx!rst.FieldValTrim!Part)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+
+	F.Intrinsic.String.Build("Select Employee From Job_Detail Where Job = '{0}' and Suffix = '{1}' and Seq = '{2}'",v.uGlobal.uJobs(v.Local.iCount)!sJob,v.uGlobal.uJobs(v.Local.iCount)!sSuffix,v.uGlobal.uJobs(v.Local.iCount)!sSeq,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",v.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+		V.uGlobal.uJobs(v.Local.iCount)!sUser.Set(V.ODBC.conx!rst.FieldValTrim!Employee)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.Next(v.Local.iCount)
+
+'set the field reference for the table that will hold report data
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!dDate,"Due_Date")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!iBIRunID,"BIRunID")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!iQty,"Qty")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sJob,"Job")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sSuffix,"Suffix")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sSeq,"Seq")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sPart,"Part")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sUser,"Employee")
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uJobs!sOpCode,"OpCode")
+'set the BIRunID and the Opcode that was used.
+F.Intrinsic.Variable.UDTSetMemberValue(V.uGlobal.uJobs!iBIRunID,V.Global.iBIRunID)
+F.Intrinsic.Variable.UDTSetMemberValue(v.uGlobal.uJobs!sOpCode,v.Local.sOpCode.Trim)
+'Save the data to the table
+V.Local.sSql.Set("Select * From GCG_3987_OpnWO_BI")
+F.ODBC.Connection!conx.OpenLocalRecordsetRW("rst",v.Local.sSql)
+F.Intrinsic.Variable.SaveUDTToRecordSet("conx","rst","v.uGlobal.uJobs")
+F.ODBC.conx!rst.Close
+'Stop logging and show the report
+F.Global.BI.StopLogging(V.Global.iBILogID)
+V.Local.sParam.Set("BIRUNID")
+V.Local.sVal.Set(v.Global.iBIRunID)
+F.Global.BI.RunReportPreProcessor(v.Global.iBIRunID,v.Global.iBILogID,v.Local.sParam,v.Local.sVal,"",-1,True,"",-1,"",-1,"","",v.Global.iBIRunID)
+
+F.Intrinsic.Control.CallSub(Form1_unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdPrint_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3987_Open_WO_Rpt.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdPrint_Click.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$SKT$}$4/21/2015 7:59:38 AM
+Program.Sub.Comments.End
+
